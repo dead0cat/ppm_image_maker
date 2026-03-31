@@ -10,8 +10,8 @@
 
 class image_buffer {
 
-protected : int w;
-protected : int h;
+protected : int w = 0;
+protected : int h = 0;
 protected : Color c_color = Color(0,0,0);
 protected : std::vector<Color> buffer;
 
@@ -53,6 +53,9 @@ public : image_buffer(int width,int height,bool alpha) {
             buffer[p] = Color(255,255,255,255);
         }
     }
+}
+public : image_buffer() {
+
 }
 
 //set_color functions
@@ -188,9 +191,34 @@ public : bool read_p6(std::string name) {
     input = fopen(name.c_str(),"rb");
     if(!input)
         return false;
-    int type,width,height,depth;
-    fscanf(input,"%*c %d %d %d %d",&type,&width,&height,&depth);
-    printf("%d %d %d %d\n",type,width,height,depth);
+    char magic[3];
+    int width,height,depth;
+
+    if (fscanf(input, "%2s %d %d %d", magic, &width, &height, &depth) != 4) {
+        fclose(input);
+        return false;
+    }
+
+    fgetc(input);
+
+    if(depth != 255)
+        printf("warning the script expects a 255 value range but you have given a n %d range",depth);
+
+    this->buffer.resize(width*height);
+    this->w = width;
+    this->h = height;
+
+    std::vector<unsigned char> color_buffer;
+    color_buffer.resize(3*w*h);
+
+    fread(color_buffer.data(),sizeof(unsigned char),3*w*h,input);
+
+    fclose(input);
+
+    for(long int p = 0; p < w*h;p++) {
+        buffer[p].set(color_buffer[3*p],color_buffer[3*p + 1],color_buffer[3*p+2]);
+    }
+
     return true;
 }
 
@@ -340,6 +368,14 @@ public : void draw_circle(int x0, int y0, int r) {
 
         x++;
         CirclePoint(x0, y0, x, y);
+    }
+}
+
+public : void simple_pass(Color (*func)(int x,int y,Color c)) {
+    for(int y = 0;y<h;y++) {
+        for(int x = 0;x < w;x++) {
+            buffer[x+y*w] = func(x,y,buffer[x+y*w]);
+        }
     }
 }
 
