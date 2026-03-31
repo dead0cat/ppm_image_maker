@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <cmath>
 
 class image_buffer {
 
@@ -188,7 +189,8 @@ public : bool write_pam_rgba(std::string name) {
 //reading files
 public : bool read_p6(std::string name) {
     FILE * input;
-    input = fopen(name.c_str(),"rb");
+    std::string full_name = name + ".ppm";
+    input = fopen(full_name.c_str(),"rb");
     if(!input)
         return false;
     char magic[3];

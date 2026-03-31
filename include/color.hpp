@@ -86,6 +86,10 @@ public : void set(float red,float green,float blue,float alpha) {
     c = (ialpha << 24) | (ired<<16) | (igreen<<8) | iblue;
 }
 
+public : long int get_c() {
+    return c;
+}
+
 public : bool operator==(Color c) {
     if (this->c == c.c)
         return true;
