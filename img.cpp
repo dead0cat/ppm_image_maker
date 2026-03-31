@@ -3,13 +3,21 @@
 #include "include/image_buffer.hpp"
 
 
-int main() {
-    image_buffer test(800,800);
-    test.set_color(0,0,0);
-	for(int n = 0; n <= 400;n+=3){
-		test.draw_circle(400,400,n);
+Color test_filter(int x,int y,Color c){
+	int red,green,blue;
+	c.get_rgb(&red,&green,&blue);
+	if(x%3==0) {
+		return Color(red,0,0);
+	} else if(x%3==1) {
+		return Color(0,green,0);
 	}
-	test.write_p6("circ");
-	test.read_p6("circ.ppm");
+	return Color(0,0,blue);
+}
+
+int main() {
+    image_buffer test;
+    test.read_p6("auggie.ppm");
+	test.simple_pass(test_filter);
+	test.write_p3("new_auggie");
     return 0;
 }
