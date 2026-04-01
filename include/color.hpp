@@ -86,6 +86,10 @@ public : void set(float red,float green,float blue,float alpha) {
     c = (ialpha << 24) | (ired<<16) | (igreen<<8) | iblue;
 }
 
+public : void set(unsigned long int color) {
+    this->c = color;
+}
+
 public : long int get_c() {
     return c;
 }

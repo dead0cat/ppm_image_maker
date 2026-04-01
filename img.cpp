@@ -1,5 +1,5 @@
 #include <iostream>
-//#include <cmath>
+#include <cmath>
 #include "include/image_buffer.hpp"
 
 std::vector<Color> color_pallet;
@@ -17,29 +17,31 @@ Color test_filter(int x,int y,Color c){
 
 void build_pallet(std::string pallet_name) {
 	FILE* file;
-    file = fopen(pallet_name.c_str(),"rb");
+    file = fopen(pallet_name.c_str(),"r");
     int size;
     fscanf(file,"%d",&size);
-
-	std::vector<unsigned char> c_byte;
-	c_byte.resize(size*3);
 	color_pallet.resize(size);
-    fread(c_byte.data(),sizeof(unsigned char),size*3,file);
+	unsigned long int color;
 	for(int p = 0;p<size;p++) {
-		color_pallet[p] = Color(c_byte[3*p],c_byte[3*p+1],c_byte[3*p+2]);
-		//printf("%d %d %d\n",c_byte[3*p],c_byte[3*p+1],c_byte[3*p+2]);
+		fscanf(file,"%lx",&color);
+		color_pallet[p].set(color);
+		//printf("%lx\n",color);
 	}
     fclose(file);
 }
 
-float dist_3d(int x1,int y1,int z1,int x2,int y2,int z2) {
-	return std::sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2));
+double dist_c(int x1,int y1,int z1,int x2,int y2,int z2) {
+	int dx,dy,dz;
+	dx =(double) (x1-x2)*(x1-x2);
+	dy =(double) (y1-y2)*(y1-y2);
+	dz =(double) (z1-z2)*(z1-z2);
+	return std::sqrt(dx+dy+dz);
 }
 
 Color reduce_pallet(int x,int y,Color c) {
-	int size = color_pallet.size()/3;
+	int size = color_pallet.size();
 	int best_p = 0;
-	float best_dis = 502;
+	float best_dis = 260;
 
 	int red,green,blue;
 	c.get_rgb(&red,&green,&blue);
@@ -47,9 +49,8 @@ Color reduce_pallet(int x,int y,Color c) {
 
 	for(int p = 0; p < size;p++) {
 		color_pallet[p].get_rgb(&pred,&pgreen,&pblue);
-		//printf("%f\n",dist_3d(red,green,blue,pred,pgreen,pblue));
-		if(best_dis > dist_3d(red,green,blue,pred,pgreen,pblue)) {
-			best_dis = dist_3d(red,green,blue,pred,pgreen,pblue);
+		if(best_dis > dist_c(red,green,blue,pred,pgreen,pblue)) {
+			best_dis = dist_c(red,green,blue,pred,pgreen,pblue);
 			best_p = p;
 		}
 	}
@@ -58,19 +59,20 @@ Color reduce_pallet(int x,int y,Color c) {
 }
 
 int main() {
-    image_buffer test;
-    test.read_p6("spectrum");
+    image_buffer test(800,800,255,255,255);
+    test.read_p6("auggie");
 	std::string pallet;
 	std::cin >> pallet;
 	build_pallet(pallet + ".hex");
 	test.simple_pass(reduce_pallet);
-	pallet = "spc_" + pallet;
+	pallet = "au_" + pallet;
 
 	for(long unsigned int p = 0;p<color_pallet.size();p++) {
 		test.set_color(color_pallet[p]);
-		test.draw_line(p*16,10,p*16,800);
+		for(int off = 0;off < 8;off++)
+			test.draw_line(p*10 + off,10,p*10 + off,40);
 	}
+	test.write_p6(pallet);
 
-	test.write_p3(pallet);
     return 0;
 }
